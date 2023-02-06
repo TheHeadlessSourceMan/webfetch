@@ -8,7 +8,7 @@ import typing
 import os
 import sys
 import subprocess
-from paths import Url,UrlCompatible
+from paths import Url,UrlCompatible,MimeType
 lastSeleniumPort:int=4000
 hasJavascriptTricksRE:typing.Pattern=None
 
@@ -88,14 +88,15 @@ class WebFetch:
 
 	def fetchNow(self,urlOrHtml:typing.Union[UrlCompatible,str],
 		returnSeleniumObject:bool=False,
-		failoverOnGeneratedPages:bool=False)->None:
+		failoverOnGeneratedPages:bool=False
+		)->typing.Tuple[typing.Optional[bytes],typing.Optional[MimeType]]:
 		"""
 		A shortcut for those who don't care about the fancy stuff
 
 		returns (data[],mimetype)
 		"""
 		data=[None] # this weirdness is to cheat the scope for the inner function
-		mime=[None]
+		mime:typing.List[MimeType]=[None]
 		oldFailover=self.failoverOnGeneratedPages
 		self.failoverOnGeneratedPages=failoverOnGeneratedPages
 		def onDone(url,html):
