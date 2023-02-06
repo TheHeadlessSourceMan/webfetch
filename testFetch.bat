@@ -1,0 +1,1 @@
+cmd /k python %~dp0/WebFetch.py http://www.johnny-lin.com/cdat_tips/tips_pylang/path.html
