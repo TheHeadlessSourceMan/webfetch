@@ -3,20 +3,28 @@
 By: K.C.Eilander
 This program fetches a youtube video.
 """
+import typing
+from collections.abc import Iterable
 import os
 import urllib
 from webFetch import WebFetch
-defaultMediaFormat='mp4'
 
 
-def youtubeFetch(idOrUrl,filename=None,mediaFormat=defaultMediaFormat,outDir='.'):
+defaultMediaFormat:str='mp4'
+
+
+def youtubeFetch(idOrUrl:str,
+    filename:typing.Optional[str]=None,
+    mediaFormat:str=defaultMediaFormat,
+    outDir:str='.'
+    )->None:
     """
     You can send in either the parameters or an array where each element is
     a set of parameters.
     """
     wf=WebFetch.WebFetch(noSelenium=True)
     wf.catalog=[]
-    if hasattr(idOrUrl,'__iter__') and not isinstance(idOrUrl,str):
+    if isinstance(idOrUrl,Iterable) and not isinstance(idOrUrl,str):
         counter=1
         for item in idOrUrl:
             __youtubeFetch(counter,wf,*item)
@@ -28,7 +36,10 @@ def youtubeFetch(idOrUrl,filename=None,mediaFormat=defaultMediaFormat,outDir='.'
     _createIdexPage(outDir,wf.catalog)
 
 
-def _createIdexPage(outDir,catalog):
+def _createIdexPage(
+    outDir:str,
+    catalog:typing.Iterable[typing.Tuple[str,str,str]])->None:
+    """ """
     title=outDir.strip()
     while title and title[0]=='.':
         title=title[1:]
@@ -58,7 +69,15 @@ def _createIdexPage(outDir,catalog):
     f.close()
 
 
-def __youtubeFetch(counter,wf,idOrUrl,filename,mediaFormat=defaultMediaFormat,outDir='.'):
+def __youtubeFetch(
+    counter:typing.Union[int,float,str],
+    wf:str,
+    idOrUrl:str,
+    filename:str,
+    mediaFormat:str=defaultMediaFormat,
+    outDir:str='.'
+    )->None:
+    """ """
     filename=filename.split('.',1)[0]
     def gotVideo(url,data):
         if not os.path.isdir(outDir):
@@ -145,7 +164,7 @@ def __youtubeFetch(counter,wf,idOrUrl,filename,mediaFormat=defaultMediaFormat,ou
     # fill catalog with (name,thumbnail,video)
     wf.catalog.append((filename,outDir+os.sep+str(counter)+'-'+filename+'.jpg',str(counter)+'-'+filename.split('.',1)[0]+'.'+mediaFormat))
 
-def _cheaterDownload(video_id):
+def _cheaterDownload(video_id:str)->None:
     """
     This cheats by using somebody else's downloader.
 
@@ -168,7 +187,7 @@ def _cheaterDownload(video_id):
     print('cheater:\n\t'+yt.get_download_url())
     yt.run()
 
-def _cheaterDownload3(video_id):
+def _cheaterDownload3(video_id:str)->None:
     """
     This cheats by using somebody else's downloader.
 

@@ -1,4 +1,5 @@
 import typing
+from collections.abc import Mapping,Iterable
 import json
 from paths import UrlCompatible, asUrl, Path
 
@@ -45,7 +46,7 @@ class QuickAndDirtyJson:
     
     def __iter__(self)->typing.Generator[JsonLike,None,None]:
         for item in iter(self.jsonObj):
-            if isinstance(item,(dict,list)):
+            if isinstance(item,(Mapping,Iterable)):
                 item=QuickAndDirtyJson(jsonObj=typing.cast(JsonDict,item))
             yield item
 
@@ -54,7 +55,7 @@ class QuickAndDirtyJson:
     @typing.overload
     def get(self,k:typing.Any,default:None)->None: ...
     def get(self,k:typing.Any,default:typing.Optional[JsonLike]=None)->typing.Optional[JsonLike]:
-        if isinstance(self.jsonObj,list):
+        if isinstance(self.jsonObj,Iterable):
             if k>=len(self.jsonObj):
                 return default
             return self.jsonObj[k]
@@ -62,7 +63,7 @@ class QuickAndDirtyJson:
 
     def __getitem__(self,k:typing.Any)->JsonLike:
         item=self.jsonObj[k]
-        if isinstance(item,(dict,list)):
+        if isinstance(item,(Mapping,Iterable)):
             return QuickAndDirtyJson(jsonObj=typing.cast(JsonDict,item))
         return item
         
@@ -71,7 +72,7 @@ class QuickAndDirtyJson:
             avail=f'\n   Available: {dir(self)}'
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{k}'{avail}")
         item:JsonLike=self.jsonObj[k]
-        if isinstance(item,(dict,list)):
+        if isinstance(item,(Mapping,Iterable)):
             return QuickAndDirtyJson(jsonObj=typing.cast(JsonDict,item))
         return item
 
@@ -85,14 +86,14 @@ class QuickAndDirtyJson:
         if k in self.__dict__ or k in ('jsonObj',):
             self.__dict__[k]=v
         else:
-            if not isinstance(v,(list,dict,str,int,float)):
+            if not isinstance(v,(Iterable,Mapping,str,int,float)):
                 v=str(v)
             self.jsonObj[k]=typing.cast(JsonLike,v)
     
     def __dir__(self)->typing.Iterable[str]:
         yield from dir(super())
         yield from self.__dict__.keys()
-        if isinstance(self.jsonObj,dict):
+        if isinstance(self.jsonObj,Mapping):
             yield from self.jsonObj.keys()
 
     def __repr__(self)->str:

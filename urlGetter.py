@@ -1,5 +1,6 @@
 from abc import abstractmethod
 import typing
+from collections.abc import Mapping
 from .WebFetch import WebFetch
 import pickle
 import os
@@ -95,7 +96,7 @@ class PickleCache(UrlGetter):
                 f=open(self.cacheFilename,'rb')
                 self.__hardCache=pickle.load(f)
                 f.close()
-                if not isinstance(self.__hardCache,dict):
+                if not isinstance(self.__hardCache,Mapping):
                     self.__hardCache={}
             else:
                 self.__hardCache={}
