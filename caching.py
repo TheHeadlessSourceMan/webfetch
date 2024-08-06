@@ -5,7 +5,7 @@ import typing
 import os
 import datetime
 import uuid
-from paths import URL, URLCompatible
+from paths import URL,URLCompatible
 
 
 class CachedWebsite:
@@ -86,8 +86,8 @@ class Cache:
         """
         if self._fetcher is None:
             if self.COMMON_DEFAULT_FETCHER is None:
-                import webFetch
-                self.COMMON_DEFAULT_FETCHER=webFetch.WebFetch()
+                import webfetch
+                self.COMMON_DEFAULT_FETCHER=webfetch.WebFetch()
             self._fetcher=self.COMMON_DEFAULT_FETCHER
         return self._fetcher
     @fetcher.setter
@@ -166,7 +166,7 @@ class Cache:
         """
         turn a url into a hashable value
         """
-        return url.__hash__()
+        return hash(url)
 
     def fetch(self,url:URLCompatible,
         date:typing.Optional[datetime.datetime]=None
@@ -198,7 +198,8 @@ class Cache:
         v=self.cache.get(url)
         if v is None:
             return None
-        if date is not None and v.retrievalDate is None or v.retrievalDate<date:
+        if date is not None \
+            and (v.retrievalDate is None or v.retrievalDate<date):
             return None
         return v.data
 
@@ -225,7 +226,7 @@ class Cache:
         else:
             cWebsite=CachedWebsite()
             cWebsite.url=url
-            cWebsite.filename=self.cacheLocation
+            cWebsite.dataFilename=self.cacheLocation
             cWebsite.data=self._nextFilename()
             cWebsite.retrievalDate=retrievalDate
             self.cache[url]=cWebsite

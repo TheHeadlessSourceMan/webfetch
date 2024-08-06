@@ -1,3 +1,10 @@
+"""
+Represents the .HAR file format
+which is a network capture as exported by Firefox/Chrome developer tools
+
+The goal of this is to auto-snarf an entire transaction and figure out
+the format of the api calls involved.
+"""
 import typing
 from collections.abc import Mapping,Iterable
 import json
@@ -11,7 +18,8 @@ JsonLike=typing.Union[JsonPrimatives,JsonDict,JsonList]
 
 class QuickAndDirtyJson:
     """
-    The name says it all.  A quick and dirty way to turn any json into a pythonic class.
+    The name says it all.  A quick and dirty way to
+    turn any json into a pythonic class.
     """
     def __init__(self,
         filename:typing.Optional[UrlCompatible]=None,
@@ -43,7 +51,7 @@ class QuickAndDirtyJson:
 
     def __len__(self)->int:
         return len(self.jsonObj)
-    
+
     def __iter__(self)->typing.Generator[JsonLike,None,None]:
         for item in iter(self.jsonObj):
             if isinstance(item,(Mapping,Iterable)):
@@ -51,10 +59,18 @@ class QuickAndDirtyJson:
             yield item
 
     @typing.overload
-    def get(self,k:typing.Any,default:JsonLike)->JsonLike: ...
+    def get(self,k:typing.Any,default:JsonLike)->JsonLike:
+        ...
     @typing.overload
-    def get(self,k:typing.Any,default:None)->None: ...
-    def get(self,k:typing.Any,default:typing.Optional[JsonLike]=None)->typing.Optional[JsonLike]:
+    def get(self,k:typing.Any,default:None)->None:
+        ...
+    def get(self,
+        k:typing.Any,
+        default:typing.Optional[JsonLike]=None
+        )->typing.Optional[JsonLike]:
+        """
+        get() like a dict
+        """
         if isinstance(self.jsonObj,Iterable):
             if k>=len(self.jsonObj):
                 return default
@@ -66,17 +82,20 @@ class QuickAndDirtyJson:
         if isinstance(item,(Mapping,Iterable)):
             return QuickAndDirtyJson(jsonObj=typing.cast(JsonDict,item))
         return item
-        
+
     def __getattr__(self,k:typing.Any)->JsonLike:
         if k not in self.jsonObj:
             avail=f'\n   Available: {dir(self)}'
-            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{k}'{avail}")
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{k}'{avail}") # noqa: E501 # pylint: disable=line-too-long
         item:JsonLike=self.jsonObj[k]
         if isinstance(item,(Mapping,Iterable)):
             return QuickAndDirtyJson(jsonObj=typing.cast(JsonDict,item))
         return item
 
     def set(self,k:typing.Any,v:JsonLike)->None:
+        """
+        set() like a dict
+        """
         self.jsonObj[k]=v
 
     def __setitem__(self,k:typing.Any,v:JsonLike)->None:
@@ -89,7 +108,7 @@ class QuickAndDirtyJson:
             if not isinstance(v,(Iterable,Mapping,str,int,float)):
                 v=str(v)
             self.jsonObj[k]=typing.cast(JsonLike,v)
-    
+
     def __dir__(self)->typing.Iterable[str]:
         yield from dir(super())
         yield from self.__dict__.keys()
@@ -104,7 +123,7 @@ class Har(QuickAndDirtyJson):
     """
     Represents the .HAR file format
     which is a network capture as exported by Firefox/Chrome developer tools
-    
+
     The goal of this is to auto-snarf an entire transaction and figure out
     the format of the api calls involved.
     """
@@ -125,12 +144,15 @@ class Har(QuickAndDirtyJson):
         if urlLike is not None:
             if isinstance(urlLike,str):
                 import re
-                urlLike=re.compile('(.*)'+re.escape(urlLike).replace(r'\*','(.*)'),re.IGNORECASE)
+                regex='(.*)'+re.escape(urlLike).replace(r'\*','(.*)')
+                urlLike=re.compile(regex,re.IGNORECASE)
             if entries is None:
                 entries=self.log.entries
             for entry in entries:
                 if urlLike.match(entry.request.url) is not None:
-                    return (entry.response.content.mimeType,entry.response.content.text)
+                    return (
+                        entry.response.content.mimeType,
+                        entry.response.content.text)
         return ('','')
 
     def findEntries(self,
@@ -142,7 +164,8 @@ class Har(QuickAndDirtyJson):
         """
         Find a certain subset of entries.
 
-        :resourceTypes: if specified, each result must have one of these resource types
+        :resourceTypes: if specified, each result must have one of
+            these resource types
         :mimeTypes: if specified, each result must have one of these mime types
         :urlLike: if specified, the url must be like this
             urlLike can be a compiled regular expression to call match() on
@@ -158,26 +181,38 @@ class Har(QuickAndDirtyJson):
             entries=self.log.entries
         if urlLike is not None and isinstance(urlLike,str):
             import re
-            urlLike=re.compile('(.*)'+re.escape(urlLike).replace(r'\*','(.*)'),re.IGNORECASE)
+            regex='(.*)'+re.escape(urlLike).replace(r'\*','(.*)')
+            urlLike=re.compile(regex,re.IGNORECASE)
         for entry in entries:
-            if resourceTypes is not None and entry._resourceType not in resourceTypes:
+            if resourceTypes is not None \
+                and entry._resourceType not in resourceTypes: # noqa: E501 # pylint: disable=line-too-long,protected-access
                 continue
-            if mimeTypes is not None and entry.response.content.mimeType not in mimeTypes:
+            if mimeTypes is not None \
+                and entry.response.content.mimeType not in mimeTypes:
                 continue
-            if urlLike is not None and urlLike.match(entry.request.url) is None:
+            if urlLike is not None \
+                and urlLike.match(entry.request.url) is None:
                 continue
             yield entry
     def printableEntry(self,entry:JsonDict)->str:
+        """
+        Get a printable entry string
+        """
         method=entry.request.method
         url=entry.request.url
-        resourceType=entry._resourceType
+        resourceType=entry._resourceType # pylint: disable=protected-access
         responseStatus=entry.response.status
         responseMime=entry.response.content.mimeType
         responseBytes=entry.response.content.size
         return f"[{resourceType}] {method} {url}\n"+ \
             f"   {responseStatus} {responseMime} ({responseBytes} bytes)"
-    
-    def printableEntries(self,entries:typing.Optional[typing.Iterable[JsonDict]]=None)->str:
+
+    def printableEntries(self,
+        entries:typing.Optional[typing.Iterable[JsonDict]]=None
+        )->str:
+        """
+        Get a printable string of all entries
+        """
         if entries is None:
             entries=self.log.entries
         return '\n\n'.join([self.printableEntry(entry) for entry in entries])
@@ -201,12 +236,19 @@ class Har(QuickAndDirtyJson):
                 url.params[kk]=standin
                 replacements['url']=url
 
-    def _replaceCookies(self,cookieJar:JsonDict,settingFrom:str,cookies:JsonList,
-        replacements:typing.Dict[str,typing.Any],value:str,standin:str)->None:
+    def _replaceCookies(self,
+        cookieJar:JsonDict,
+        settingFrom:str,
+        cookies:JsonList,
+        replacements:typing.Dict[str,typing.Any],
+        value:str,
+        standin:str
+        )->None:
         """
         finds the value in the cookies, then replaces it with the stand-in
 
-        NOTE: if the cookies in the jar changed, will also add it to the replacements
+        NOTE: if the cookies in the jar changed, will also
+        add it to the replacements
         """
         for cookie in cookies:
             cookieId=f'{cookie.name}@{cookie.domain}'
@@ -228,49 +270,61 @@ class Har(QuickAndDirtyJson):
         """
         finds the value in the cookies, then replaces it with the stand-in
 
-        NOTE: if the cookies in the jar changed, will also add it to the replacements
+        NOTE: if the cookies in the jar changed, will also
+        add it to the replacements
         """
         if contents is not None and contents.find(value)>=0:
             replacements[settingFrom]=contents.replace(value,standin)
 
     def snarf(self,
-        dataToVariable:typing.Dict[str,str]={},
+        dataToVariable:typing.Optional[typing.Dict[str,str]]=None,
         entries:typing.Optional[typing.Iterable[JsonDict]]=None):
         """
         This snarfs a .har file to try and determine an api
 
-        The whole goal is to generate a configurable series of steps that can bring about
-        the original data flow, only with custom data fields.
+        The whole goal is to generate a configurable series of steps
+        that can bring about the original data flow, only with
+        custom data fields.
 
-        :dataToVariable: find certain data in the requests and call that a variable
-            For instance, you sumitted a form with zipcode "90210", dataToVariable={"90210","zipcode"}
-            NOTE: if the variable contains "#" this is a little different because it
-                may be hashed in the data ("#password" would be the most common example!)
+        :dataToVariable: find certain data in the requests and call
+            that a variable
+            For instance, you sumitted a form with
+                zipcode "90210", dataToVariable={"90210","zipcode"}
+            NOTE: if the variable contains "#" this is a little different
+                because it may be hashed in the data
+                ("#password" would be the most common example!)
                 examples:
                     "sha1#password"
                     "md5#password"
                     "#password" (which is all hashes)
-        :entries: instead of passing in all entries, you can pass in a filtered subset,
+        :entries: instead of passing in all entries, you can
+            pass in a filtered subset,
             for instance, to just snarf ajax:
                 har.snarf(entries=har.findEntries(resourceTypes=['xhr']))
 
-        NOTE: anything that ends with "key" or "token" or contains "sess[ion]" will be added to the results
+        NOTE: anything that ends with "key" or "token" or contains "sess[ion]"
+            will be added to the results
 
         TODO: scrape html responses for forms and add those to the results
         """
         import hashlib
+        if dataToVariable is None:
+            dataToVariable={}
         for k,v in dataToVariable.items():
             hashval=v.split('#',1)
             if len(hashval)>1:
                 dataToVariable[k]=hashval[1] # non-hashed
                 if not hashval[0]:
                     for hashtype in ('sha1','md5'):
-                        dataToVariable[getattr(hashlib,hashtype)(k)]=f'{hashtype}#{hashval[1]}'
+                        dataToVariable[getattr(hashlib,hashtype)(k)]=\
+                            f'{hashtype}#{hashval[1]}'
                 else:
-                    dataToVariable[getattr(hashlib,hashval[0])(k)]='#'.join(hashval)
+                    dataToVariable[getattr(hashlib,hashval[0])(k)]=\
+                        '#'.join(hashval)
         if entries is None:
             entries=self.log.entries
-        foundEntries:typing.List[typing.Tuple[JsonDict,typing.Dict[str,str]]]=[]
+        foundEntries:typing.List[
+            typing.Tuple[JsonDict,typing.Dict[str,str]]]=[]
         cookieJar:JsonDict={}
         for entry in entries:
             replacements:typing.Dict[str,typing.Any]={}
@@ -278,11 +332,19 @@ class Har(QuickAndDirtyJson):
             for value,standin in dataToVariable.items():
                 standin=self._makeStandin(standin)
                 self._replaceUrl(url,replacements,value,standin)
-                self._replaceCookies(cookieJar,'requestCookies',entry.request.cookies,replacements,value,standin)
+                self._replaceCookies(
+                    cookieJar,'requestCookies',
+                    entry.request.cookies,replacements,value,standin)
                 print(dir(entry.response.content))
-                self._replaceContents(entry.response.content.get('text'),'requestContents',replacements,value,standin)
-                self._replaceCookies(cookieJar,'responseCookies',entry.response.cookies,replacements,value,standin)
-                self._replaceContents(entry.response.content.get('text'),'responseContents',replacements,value,standin)
+                self._replaceContents(
+                    entry.response.content.get('text'),
+                    'requestContents',replacements,value,standin)
+                self._replaceCookies(
+                    cookieJar,'responseCookies',
+                    entry.response.cookies,replacements,value,standin)
+                self._replaceContents(
+                    entry.response.content.get('text'),
+                    'responseContents',replacements,value,standin)
             if replacements:
                 foundEntries.append((entry,replacements))
         return foundEntries
@@ -292,8 +354,12 @@ class Har(QuickAndDirtyJson):
 
 
 def test():
+    """
+    Run some sanity checks
+    """
     har=Har(r"D:\python\webfetch\sample_data\www.amazon.com.har")
     entries:typing.List[typing.Any]=list(har.findEntries(["xhr"]))
+    _=entries
     #print(har.printableEntries(har.findEntries(["xhr"])))
     #print(entries[0].request.cookies)
 

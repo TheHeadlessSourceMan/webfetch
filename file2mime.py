@@ -63,21 +63,23 @@ def osFile2Mime(filename:URLCompatible,data:bytes=None)->str:
     """
     See if the os can identify a mime type.
 
-    NOTE: you probably want to call file2mime(...,useOS=True) instead, as it may be faster
+    NOTE: you probably want to call file2mime(...,useOS=True)
+    instead, as it may be faster
     """
     if os.sep!='/':
         filename=filename.replace(os.sep,'/')
     ext=filename.rsplit('?',1)[0].rsplit('/',1)[-1].rsplit('.',1)[-1].lower()
-    if True: # TODO: check for windows here
-        return _windowsFile2Mime(ext)
-    return None # this OS cannot do this
+    return _windowsFile2Mime(ext)
 
 
 _windowsFileTypeTable:typing.Optional[typing.Dict[str,str]]=None
 def _windowsFile2Mime(ext:str):
     global _windowsFileTypeTable
     if _windowsFileTypeTable is None:
-        import windowsFileTypes
+        try:
+            import windowsFileTypes # type: ignore
+        except ImportError:
+            return None
         _windowsFileTypeTable={}
         for k,v in windowsFileTypes.FileTypes().regMimeTypes.items():
             for extn in v:

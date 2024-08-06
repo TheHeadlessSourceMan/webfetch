@@ -1,7 +1,13 @@
+"""
+Common types
+"""
 import typing
 from enum import Enum
 
 class HttpMethod(Enum):
+    """
+    Enum of http method verbs
+    """
     GET="GET" # used to get data
     POST="POST" # used to create data
     UPDATE="UPDATE" # used to modify data

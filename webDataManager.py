@@ -21,9 +21,15 @@ class Data:
 
     @property
     def source(self)->Url:
+        """
+        Where did this data come from
+        """
         return self.url
     @property
     def origin(self)->Url:
+        """
+        Where did this data come from
+        """
         return self.url
 
 
@@ -41,7 +47,6 @@ class WebDataManager:
         :param refetchIfOlder: refetch if the data is older than this date
             (if None, don't care as long as we have it)
         """
-        pass
 
 
 def cmdline(args):
