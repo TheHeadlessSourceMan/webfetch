@@ -1,11 +1,11 @@
 <OnlineBackupServices>
-	<!-- in the href, use %u for the url %d for the date -->
-	<!-- See also http://www.searchengineshowdown.com/others/archive.shtml -->
-	<OnlineBackupService name="coral" href="%u.nyud.net">CoralCDN</OnlineBackupService>
-	<OnlineBackupService name="google" href="http://webcache.googleusercontent.com/search?q=cache:%u">Google Cache</OnlineBackupService>
-	<OnlineBackupService name="yahoo" href="">Yahoo! Cache</OnlineBackupService>
-	<OnlineBackupService name="wayback" href="">The Internet Archive (Wayback Machine)</OnlineBackupService>
-	<OnlineBackupService name="msn" href="">MSN Cache</OnlineBackupService>
-	<OnlineBackupService name="gigablast" href="">Gigablast</OnlineBackupService>
-	<OnlineBackupService name="webcite" href="">WebCite</OnlineBackupService>
+    <!-- in the href, use %u for the url %d for the date -->
+    <!-- See also http://www.searchengineshowdown.com/others/archive.shtml -->
+    <OnlineBackupService name="coral" href="%u.nyud.net">CoralCDN</OnlineBackupService>
+    <OnlineBackupService name="google" href="http://webcache.googleusercontent.com/search?q=cache:%u">Google Cache</OnlineBackupService>
+    <OnlineBackupService name="yahoo" href="">Yahoo! Cache</OnlineBackupService>
+    <OnlineBackupService name="wayback" href="">The Internet Archive (Wayback Machine)</OnlineBackupService>
+    <OnlineBackupService name="msn" href="">MSN Cache</OnlineBackupService>
+    <OnlineBackupService name="gigablast" href="">Gigablast</OnlineBackupService>
+    <OnlineBackupService name="webcite" href="">WebCite</OnlineBackupService>
 </OnlineBackupServices>

@@ -54,7 +54,15 @@ confidence=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-disable=print-statement,
+disable=
+        unrecognized-option,
+        unknown-option-value,
+        superfluous-parens,
+        disallowed-name,
+        global-statement,
+        too-many-lines,
+        singleton-comparison,
+        print-statement,
         parameter-unpacking,
         unpacking-in-except,
         old-raise-syntax,
@@ -134,33 +142,34 @@ disable=print-statement,
         deprecated-sys-function,
         exception-escape,
         comprehension-escape,
-		invalid-name,
-		bad-whitespace,
-		bad-continuation,
-		mixed-indentation,
-		too-many-instance-attributes,
-		unused-wildcard-import,
-		no-self-use,
-		missing-final-newline,
-		wildcard-import,
-		redefined-outer-name,
-		redefine-in-handler,
-		too-few-public-methods,
-		too-many-public-methods,
-		too-many-branches,
-		too-many-locals,
-		too-many-ancestors,
-		too-many-arguments,
-		too-many-statements,
-		too-many-nested-blocks,
-		consider-using-f-string,
-		import-outside-toplevel,
+        invalid-name,
+        bad-whitespace,
+        bad-continuation,
+        mixed-indentation,
+        too-many-instance-attributes,
+        unused-wildcard-import,
+        no-self-use,
+        missing-final-newline,
+        wildcard-import,
+        redefined-outer-name,
+        redefine-in-handler,
+        too-few-public-methods,
+        too-many-public-methods,
+        too-many-branches,
+        too-many-locals,
+        too-many-ancestors,
+        too-many-arguments,
+        too-many-statements,
+        too-many-nested-blocks,
+        consider-using-f-string,
+        import-outside-toplevel,
+        c-extension-no-member
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once). See also the "--disable" option for examples.
-enable=c-extension-no-member
+enable=
 
 
 [REPORTS]

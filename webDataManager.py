@@ -13,17 +13,23 @@ class Data:
     Some data fetched from the web
     """
 
-    def __init__(self):
+    def __init__(self)->None:
         self.url:typing.Optional[Url]=None
         self.lastFetchDate:typing.Optional[datetime.datetime]=None
         self.sourceDate:typing.Optional[datetime.datetime]=None
         self.data:typing.Optional[bytes]=None
 
     @property
-    def source(self)->Url:
+    def source(self)->typing.Optional[Url]:
+        """
+        the origin of the data
+        """
         return self.url
     @property
-    def origin(self)->Url:
+    def origin(self)->typing.Optional[Url]:
+        """
+        the origin of the data
+        """
         return self.url
 
 
@@ -41,7 +47,6 @@ class WebDataManager:
         :param refetchIfOlder: refetch if the data is older than this date
             (if None, don't care as long as we have it)
         """
-        pass
 
 
 def cmdline(args):

@@ -1,9 +1,13 @@
+"""
+Base class for all getters
+"""
 from abc import abstractmethod
 import typing
-from .WebFetch import WebFetch
 import pickle
 import os
+import sys
 from paths import URLCompatible, asUrl
+from .WebFetch import WebFetch
 from .webfetchTypes import WebFetchResult, HttpMethod
 
 
@@ -21,6 +25,9 @@ WebpageGetter=UrlGetter
 
 
 class NormalUrlGetter(UrlGetter):
+    """
+    Get via a simple http:// request or by file://
+    """
 
     def __init__(self,proxy:URLCompatible=None,timeoutSeconds:float=2.0):
         """
@@ -33,7 +40,7 @@ class NormalUrlGetter(UrlGetter):
 
     def get(self,
         url:URLCompatible,
-        userAgent:str='Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:74.0) Gecko/20100101 Firefox/74.0',
+        userAgent:str='Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:74.0) Gecko/20100101 Firefox/74.0', # noqa: E501 # pylint: disable=line-too-long
         method:typing.Union[str,HttpMethod]='GET'
         )->WebFetchResult:
         """
@@ -47,7 +54,7 @@ class NormalUrlGetter(UrlGetter):
         :type method: HttpMethod, optional
         :return: a web fetch result
         :rtype: WebFetchResult
-        """
+        """ # noqa: E501 # pylint: disable=line-too-long
         url=asUrl(url)
         if isinstance(method,HttpMethod):
             method=str(method)
@@ -57,7 +64,8 @@ class NormalUrlGetter(UrlGetter):
                 data=url.read()
             else:
                 #TODO: Should force this off to someobdy who does it better
-                #data=self._webfetch.fetchNow(url,failoverOnGeneratedPages=True)
+                #data=self._webfetch.fetchNow(
+                #   url,failoverOnGeneratedPages=True)
                 import urllib.request
                 req=urllib.request.Request(url)
                 if userAgent is not None:
@@ -105,13 +113,24 @@ class PickleCache(UrlGetter):
         self.flush()
 
     def flush(self)->None:
+        """
+        flush the data to file
+        """
         if self._dirty:
             f=open(self.cacheFilename,'wb')
             pickle.dump(self.__hardCache,f)
             f.close()
             self._dirty=False
 
-    def cache(self,url:URLCompatible,data:bytes,autoflush:bool=True,hardCache:bool=True)->None:
+    def cache(self,
+        url:URLCompatible,
+        data:bytes,
+        autoflush:bool=True,
+        hardCache:bool=True
+        )->None:
+        """
+        add results to the cache
+        """
         hard,soft=self._caches()
         if hardCache:
             hard[url]=data
@@ -122,6 +141,9 @@ class PickleCache(UrlGetter):
             soft[url]=data
 
     def unCache(self,url:URLCompatible,autoflush:bool=True):
+        """
+        remove results from the cache
+        """
         hard,soft=self._caches()
         if not isinstance(url,str):
             url=url.url
@@ -142,8 +164,13 @@ class PickleCache(UrlGetter):
             return hard.keys()
         return soft.keys()
 
-
-    def get(self,url:URLCompatible,cache:bool=True,refetch:bool=False,autoflush:bool=True,persist:bool=True)->WebFetchResult:
+    def get(self,
+        url:URLCompatible,
+        cache:bool=True,
+        refetch:bool=False,
+        autoflush:bool=True,
+        persist:bool=True
+        )->WebFetchResult:
         """
         cache - used to turn off caching for an indivitual page
 
@@ -170,7 +197,7 @@ class PickleCache(UrlGetter):
             # save changes to the appropriate cache
             if persist:
                 hard[url]=data
-                self.dirty=True
+                self._dirty=True
                 if autoflush:
                     self.flush()
             else:
@@ -178,8 +205,11 @@ class PickleCache(UrlGetter):
         return data
 
 
-
-def fetch(url:URLCompatible,cacheLocation:str=None,cookies:typing.Dict[str,str]=None,userAgent:str=None)->WebFetchResult:
+def fetch(
+    url:URLCompatible,
+    cacheLocation:str=None,
+    cookies:typing.Dict[str,str]=None,
+    userAgent:str=None)->WebFetchResult:
     """
     awesome shortcut routine to fetch a file from the web
     """
@@ -265,5 +295,4 @@ def cmdline(args):
 
 
 if __name__=='__main__':
-    import sys
     cmdline(sys.argv[1:])

@@ -5,7 +5,7 @@ gets the mime type for a given file
 """
 import typing
 import os
-from paths import URLCompatible
+from paths import URLCompatible, asUrl
 
 
 _SIMPLE_MIME_TABLE={
@@ -28,7 +28,10 @@ _SIMPLE_MIME_TABLE={
 }
 
 
-def file2mime(filename:URLCompatible,data:bytes=None,useOS:bool=False
+def file2mime(
+    filename:URLCompatible,
+    data:typing.Optional[bytes]=None,
+    useOS:bool=False
     )->typing.Optional[str]:
     """
     get the mime type based on filename (or data content)
@@ -38,10 +41,8 @@ def file2mime(filename:URLCompatible,data:bytes=None,useOS:bool=False
     Can return None if unknown
     """
     ret=None
-    global _SIMPLE_MIME_TABLE
-    if os.sep!='/':
-        filename=filename.replace(os.sep,'/')
-    ext=filename.rsplit('?',1)[0].rsplit('/',1)[-1].rsplit('.',1)[-1].lower()
+    filename=asUrl(filename)
+    ext=filename.ext
     if ext in _SIMPLE_MIME_TABLE:
         ret=_SIMPLE_MIME_TABLE[ext]
     elif useOS:
@@ -59,18 +60,22 @@ def file2mime(filename:URLCompatible,data:bytes=None,useOS:bool=False
     return ret
 
 
-def osFile2Mime(filename:URLCompatible,data:bytes=None)->str:
+def osFile2Mime(
+    filename:URLCompatible,
+    data:typing.Optional[bytes]=None
+    )->str:
     """
     See if the os can identify a mime type.
 
-    NOTE: you probably want to call file2mime(...,useOS=True) instead, as it may be faster
+    NOTE: you probably want to call file2mime(...,useOS=True)
+    instead, as it may be faster
     """
-    if os.sep!='/':
-        filename=filename.replace(os.sep,'/')
-    ext=filename.rsplit('?',1)[0].rsplit('/',1)[-1].rsplit('.',1)[-1].lower()
-    if True: # TODO: check for windows here
+    filename=asUrl(filename)
+    ext=filename.ext
+    _=data
+    if os.name=='nt': # this is windows
         return _windowsFile2Mime(ext)
-    return None # this OS cannot do this
+    raise NotImplementedError()
 
 
 _windowsFileTypeTable:typing.Optional[typing.Dict[str,str]]=None

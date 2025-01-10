@@ -5,7 +5,7 @@ import typing
 import os
 import datetime
 import uuid
-from paths import URL, URLCompatible
+from paths import URL,URLCompatible,asUrl
 
 
 class CachedWebsite:
@@ -13,34 +13,43 @@ class CachedWebsite:
     Single cached website
     """
 
-    def __init__(self):
-        self.url:URL=None
-        self.retrievalDate:datetime.datetime=None
-        self.dataFilename:str=None
+    def __init__(self)->None:
+        self.url:typing.Optional[URL]=None
+        self.retrievalDate:typing.Optional[datetime.datetime]=None
+        self.dataFilename:typing.Optional[str]=None
+
+    @property
+    def filename(self)->typing.Optional[str]:
+        """
+        the data filename
+        """
+        return self.dataFilename
 
     @property
     def data(self)->bytes:
         """
         this value automatically loads/saves the data from file
         """
-        f=open(self.dataFilename,'rb')
-        d=f.read()
-        f.close()
-        return d
+        if self.dataFilename is None:
+            raise FileNotFoundError(str(self.dataFilename))
+        with open(self.dataFilename,'rb') as f:
+            data=f.read()
+        return data
     @data.setter
     def data(self,data:bytes):
-        f=open(self.dataFilename,'wb')
-        f.write(data)
-        f.close()
+        if self.dataFilename is None:
+            raise FileNotFoundError(str(self.dataFilename))
+        with open(self.dataFilename,'wb') as f:
+            f.write(data)
 
-    def decode(self,data:bytes):
+    def decode(self,data:str):
         """
         decode a line of data
         """
-        data_a=data.split(b',',3)
-        self.retrievalDate=datetime.datetime(data_a[0].strip())
+        data_a=data.split(',',3)
+        self.retrievalDate=datetime.datetime.strptime("",data_a[0].strip())
         self.dataFilename=data_a[1].strip()
-        self.url=data_a[2].strip()
+        self.url=asUrl(data_a[2].strip())
 
     def encode(self)->str:
         """
@@ -76,7 +85,7 @@ class Cache:
         self._dirty:bool=False
         self._fetcher:typing.Optional[str]=fetcher
         self.autosave:bool=autosave
-        self.cache:typing.Dict[URL,CachedWebsite]={}
+        self.cache:typing.Dict[typing.Optional[URL],CachedWebsite]={}
 
     @property
     def fetcher(self):
@@ -99,7 +108,7 @@ class Cache:
         """
         get the filename of the manifest
         """
-        return self.cacheLocation+os.sep+'manifest.csv'
+        return str(self.cacheLocation)+os.sep+'manifest.csv'
 
     def __del__(self):
         """
@@ -107,11 +116,11 @@ class Cache:
         """
         self.save()
 
-    def decode(self,data:bytes):
+    def decode(self,data:str):
         """
         decode manifest for the cache database
         """
-        lines=data.split(b'\n')
+        lines=data.split('\n')
         if lines:
             lines=lines[1:]
         for line in lines:
@@ -136,18 +145,16 @@ class Cache:
         save out the manifest file
         """
         if self._dirty:
-            f=open(self.filename,'wb')
-            f.write(self.encode())
-            f.close()
+            with open(self.filename,'w',encoding='utf-8') as f:
+                f.write(self.encode())
             self._dirty=False
 
     def load(self)->None:
         """
         load the manifest file
         """
-        f=open(self.filename,'rb')
-        self.decode(f.read())
-        f.close()
+        with open(self.filename,'r',encoding='utf-8',errors='ignore') as f:
+            self.decode(f.read())
         self._dirty=False
 
     @property
@@ -166,7 +173,7 @@ class Cache:
         """
         turn a url into a hashable value
         """
-        return url.__hash__()
+        return hash(url)
 
     def fetch(self,url:URLCompatible,
         date:typing.Optional[datetime.datetime]=None
@@ -186,7 +193,8 @@ class Cache:
             self.setCache(url,data)
         return data
 
-    def getCache(self,url:URLCompatible,
+    def getCache(self,
+        url:URLCompatible,
         date:typing.Optional[datetime.datetime]=None
         )->typing.Optional[bytes]:
         """
@@ -195,10 +203,14 @@ class Cache:
         return None if the item is not in the cache, or
             it is out-of-date.  Otherwise returns the data.
         """
-        v=self.cache.get(url)
+        v=self.cache.get(asUrl(url))
         if v is None:
             return None
-        if date is not None and v.retrievalDate is None or v.retrievalDate<date:
+        if date is not None \
+            and v.retrievalDate is None \
+            or date is None \
+            or v.retrievalDate<date:
+            #
             return None
         return v.data
 
@@ -206,7 +218,8 @@ class Cache:
         """
         get the next filename for a cached file
         """
-        return self.cacheLocation+os.sep+uuid.uuid4().hex+'.cache'
+        uid=str(uuid.uuid4().hex)
+        return f'{self.cacheLocation}{os.sep}{uid}.cache'
 
     def setCache(self,url:URLCompatible,data:bytes,
         retrievalDate:typing.Union[None,str,datetime.datetime]=None
@@ -214,10 +227,12 @@ class Cache:
         """
         set some url data
         """
+        url=asUrl(url)
         if retrievalDate is None:
             retrievalDate=datetime.datetime.now()
-        if not isinstance(retrievalDate,str):
-            retrievalDate=str(retrievalDate)
+        else:
+            retrievalDate=datetime.datetime.strptime(
+                "",str(retrievalDate))
         if url in self.cache:
             cWebsite=self.cache[url]
             cWebsite.data=data
@@ -228,7 +243,7 @@ class Cache:
             cWebsite.filename=self.cacheLocation
             cWebsite.data=self._nextFilename()
             cWebsite.retrievalDate=retrievalDate
-            self.cache[url]=cWebsite
+            self.cache[URL(url)]=cWebsite
         self.dirty=True
 
     def __getattr__(self,url:URLCompatible)->bytes:
