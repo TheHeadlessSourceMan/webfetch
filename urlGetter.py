@@ -79,7 +79,7 @@ class NormalUrlGetter(UrlGetter):
                 data=f.read()
                 data=(data,mime)
         except Exception as e:
-            print("ERR:",url.encode(sys.stdout.encoding,errors='replace'))
+            print("ERR:",url)
             raise e
         return data
 
@@ -103,7 +103,7 @@ class PickleCache(UrlGetter):
                 f=open(self.cacheFilename,'rb')
                 self.__hardCache=pickle.load(f)
                 f.close()
-                if not isinstance(self.__hardCache,dict):
+                if not isinstance(self.__hardCache,typing.Mapping):
                     self.__hardCache={}
             else:
                 self.__hardCache={}
@@ -186,7 +186,7 @@ class PickleCache(UrlGetter):
         """
         if url.protocol=='file':
             cache=False # never cache local files
-        if cache:
+        if cache and not refetch:
             hard,soft=self._caches()
             if url in soft:
                 return soft[url]
@@ -197,6 +197,7 @@ class PickleCache(UrlGetter):
             # save changes to the appropriate cache
             if persist:
                 hard[url]=data
+                self._dirty=True
                 self._dirty=True
                 if autoflush:
                     self.flush()
@@ -216,6 +217,7 @@ def fetch(
     getter:UrlGetter=NormalUrlGetter()
     if cacheLocation is not None:
         getter=PickleCache(getter,cacheFilename=cacheLocation)
+    _,_=cookies,userAgent # TODO: figure out how to pass into getters
     data=getter.get(url)
     return data
 
@@ -228,12 +230,12 @@ def cmdline(args):
     """
     import re
     if not args:
-        print('USEAGE:\n\turlGetter cmd')
+        print('USEAGE:\n    urlGetter cmd')
         print('CMDs:')
-        print('\tls [pattern]')
-        print('\tget url')
-        print('\tfork pattern newfile')
-        print('\trm pattern')
+        print('    ls [pattern]')
+        print('    get url')
+        print('    fork pattern newfile')
+        print('    rm pattern')
     else:
         g=PickleCache(UrlGetter())
         if args[0]=='ls':

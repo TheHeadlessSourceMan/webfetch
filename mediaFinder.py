@@ -36,6 +36,8 @@ class MediaFinder:
         """
         Generally you should add this to a sermonator
         instead of calling _get() directly.
+        Generally you should add this to a sermonator
+        instead of calling _get() directly.
         """
 
 

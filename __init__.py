@@ -17,7 +17,7 @@ USAGE:
     wf.enqueue(processResults,url3)
     wf.runAll()
 """
-from WebFetch import *
-from webfetchQT import *
-from WebForm import *
-from WebSearch import *
+from .WebFetch import *
+from .webfetchQT import *
+from .WebForm import *
+from .WebSearch import *

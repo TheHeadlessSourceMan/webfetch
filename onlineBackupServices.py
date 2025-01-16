@@ -5,7 +5,7 @@ online backup services (like "wayback machine")
 """
 import os
 import datetime
-from .webpageGetter import WebpageGetter
+from .urlGetter import WebpageGetter
 
 
 class OnlineBackupService(WebpageGetter):
@@ -42,7 +42,7 @@ class OnlineBackupService(WebpageGetter):
             backupUrl=backupUrl.replace('%d',date)
         from webFetch import WebFetch
         print('Fetching',url,'...')
-        (data,mimetype)=WebFetch.WebFetch().fetchNow(url)
+        (data,mimetype)=WebFetch().fetchNow(url)
         print('Got back',len(data),'bytes of',mimetype)
         return data
 
@@ -187,4 +187,6 @@ class OnlineBackupServices(WebpageGetter):
 
 
 if __name__ == '__main__':
+    OnlineBackupServices().cmdline()
+
     OnlineBackupServices().cmdline()

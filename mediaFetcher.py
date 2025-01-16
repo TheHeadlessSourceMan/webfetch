@@ -115,6 +115,7 @@ class MediaFetcher(WebFetch):
         self.indexDir:typing.Optional[str]=None
         self.startFetchQueue:typing.Dict[str,Download]={}
         self.likeFetchQueue:typing.Dict[Url,typing.Tuple[str,str,Url]]={} # url:(name,downloadTo,originalUrl) # noqa: E501 # pylint: disable=line-too-long
+        self.likeFetchQueue:typing.Dict[Url,typing.Tuple[str,str,Url]]={} # url:(name,downloadTo,originalUrl) # noqa: E501 # pylint: disable=line-too-long
         self.links:typing.Dict[str,str]={}
         self.mediaTypes:typing.List[str]=['mp3','rm','rma','wma','wav','aac']
         self.debug:int=1 # 0=none 1=error 2=warning 3=info
@@ -137,6 +138,8 @@ class MediaFetcher(WebFetch):
         if self.downloadRecordsFile is not None:
             pickle.dump(self.downloadRecords,
                 open(self.downloadRecordsFile,'w+b'))
+            pickle.dump(self.downloadRecords,
+                open(self.downloadRecordsFile,'w+b'))
 
     def _addDownloadRecord(self,url:str,filename:str)->None:
         self.downloadRecords[url]=filename
@@ -157,6 +160,8 @@ class MediaFetcher(WebFetch):
         """
         Extracts media from a flash .swf file
 
+        If it works, returns a string pointing to the data.
+        If not, it returns False.
         If it works, returns a string pointing to the data.
         If not, it returns False.
 
@@ -224,6 +229,7 @@ class MediaFetcher(WebFetch):
             extension=ext_a[-1]
         else:
             ext_a=url.ext
+            ext_a=url.ext
             if len(ext_a)>1:
                 extension=ext_a[-1]
             else:
@@ -278,6 +284,7 @@ class MediaFetcher(WebFetch):
                     self.links['[old] '+filename]='<b><a href="'+self.downloadRecords[url]+'">[old] '+filename+'</a></b>' # noqa: E501 # pylint: disable=line-too-long
                     if self.debug>=2:
                         print('[SKIP] Already downloaded "'+download.name+'" from '+self.downloadRecords[url]) # noqa: E501 # pylint: disable=line-too-long
+                        print('[SKIP] Already downloaded "'+download.name+'" from '+self.downloadRecords[url]) # noqa: E501 # pylint: disable=line-too-long
                 else:
                     self.likeFetchQueue[url]=(
                         filename,download.downloadTo,baseUrl)
@@ -292,6 +299,7 @@ class MediaFetcher(WebFetch):
             f.close()
             if os.sep!='/':
                 filename=filename.replace(os.sep,'/')
+            self.links[download.name]='<b>"'+download.name+'"</b> - Link Not Found. [see also, <a href="'+filename+'">what was downloaded</a>]' # noqa: E501 # pylint: disable=line-too-long
             self.links[download.name]='<b>"'+download.name+'"</b> - Link Not Found. [see also, <a href="'+filename+'">what was downloaded</a>]' # noqa: E501 # pylint: disable=line-too-long
             if self.debug>=1:
                 print('"'+download.name+'" - Link Not Found In:\n\t'+baseUrl+'\nSee \"'+filename+'\" for details.') # noqa: E501 # pylint: disable=line-too-long
@@ -334,7 +342,7 @@ class MediaFetcher(WebFetch):
             if self.debug>=1:
                 print('Nothing downloaded. No index created.')
             else:
-                f=open(filename,'w+')
+                f=open(filename,'w+',encoding="utf-8")
                 f.write(self.getLinksHtml(title))
                 f.close()
         return filename
@@ -346,6 +354,7 @@ def cmdline(args:typing.Iterable[str])->int:
 
     :param args: command line arguments (WITHOUT the filename)
     """
+    _=args
     _=args
     print('This currently does nothing from the command line.')
     return -1

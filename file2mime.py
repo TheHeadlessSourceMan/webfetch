@@ -69,6 +69,8 @@ def osFile2Mime(
 
     NOTE: you probably want to call file2mime(...,useOS=True)
     instead, as it may be faster
+    NOTE: you probably want to call file2mime(...,useOS=True)
+    instead, as it may be faster
     """
     filename=asUrl(filename)
     ext=filename.ext
@@ -82,7 +84,10 @@ _windowsFileTypeTable:typing.Optional[typing.Dict[str,str]]=None
 def _windowsFile2Mime(ext:str):
     global _windowsFileTypeTable
     if _windowsFileTypeTable is None:
-        import windowsFileTypes
+        try:
+            import windowsFileTypes # type: ignore
+        except ImportError:
+            return None
         _windowsFileTypeTable={}
         for k,v in windowsFileTypes.FileTypes().regMimeTypes.items():
             for extn in v:

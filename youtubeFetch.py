@@ -3,6 +3,8 @@
 By: K.C.Eilander
 This program fetches a youtube video.
 """
+import typing
+from collections.abc import Iterable
 import os
 import urllib
 import urllib.parse
@@ -19,9 +21,9 @@ def youtubeFetch(
     You can send in either the parameters or an array where each element is
     a set of parameters.
     """
-    wf=WebFetch.WebFetch(noSelenium=True)
+    wf=WebFetch(noSelenium=True)
     wf.catalog=[]
-    if hasattr(idOrUrl,'__iter__') and not isinstance(idOrUrl,str):
+    if isinstance(idOrUrl,Iterable) and not isinstance(idOrUrl,str):
         counter=1
         for item in idOrUrl:
             __youtubeFetch(counter,wf,*item)
@@ -33,7 +35,10 @@ def youtubeFetch(
     _createIdexPage(outDir,wf.catalog)
 
 
-def _createIdexPage(outDir,catalog):
+def _createIdexPage(
+    outDir:str,
+    catalog:typing.Iterable[typing.Tuple[str,str,str]])->None:
+    """ """
     title=outDir.strip()
     while title and title[0]=='.':
         title=title[1:]
@@ -50,8 +55,8 @@ def _createIdexPage(outDir,catalog):
     html.append('\t\ta {text-decoration:none}')
     html.append('\t</style>')
     html.append('</head>\n<body>')
-    html.append('\t<h1>'+title+'</h1>')
-    html.append('\t<div>')
+    html.append('    <h1>'+title+'</h1>')
+    html.append('    <div>')
     for cat in catalog:
         # cat is (name,thumbnail,video)
         html.append('\t\t<div class="lesson"><a href="'+cat[2]+'"><img src="'+cat[1]+'" /><br />'+cat[0]+'</a></div>') # noqa: E501 # pylint: disable=line-too-long
@@ -75,12 +80,14 @@ def __youtubeFetch(
     """
     filename=filename.split('.',1)[0]
     def gotVideo(url,data):
+        _=url
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
         f=open(outDir+os.sep+str(counter)+'-'+filename+'.'+mediaFormat,'wb')
         f.write(data)
         f.close()
     def gotThumbnail(url,data):
+        _=url
         if not os.path.isdir(outDir):
             os.makedirs(outDir)
         f=open(outDir+os.sep+str(counter)+'-'+filename+'.jpg','wb')
@@ -152,10 +159,10 @@ def __youtubeFetch(
         wf.enqueue(gotThumbnail,video_id)
         print('\tDownloading "'+downloadUrl+'"')
         #for k,v in flashvars.items():
-        #    print(k,'=',urllib.unquote(v))
-        wf.enqueue(gotVideo,downloadUrl)
+        #    print(k,'=',urldecode(v))
+        wf.enqueue(gotVideo,downloadUrl,title)
     url='http://www.youtube.com/watch?v='+getId(idOrUrl)
-    print('\tLooking up "'+url+'"')
+    print('    Looking up "'+url+'"')
     _cheaterDownload3(url)
     #wf.enqueue(gotVideoPage,url)
     # fill catalog with (name,thumbnail,video)
@@ -163,8 +170,12 @@ def __youtubeFetch(
         filename,
         outDir+os.sep+str(counter)+'-'+filename+'.jpg',
         str(counter)+'-'+filename.split('.',1)[0]+'.'+mediaFormat))
+    wf.catalog.append((
+        filename,
+        outDir+os.sep+str(counter)+'-'+filename+'.jpg',
+        str(counter)+'-'+filename.split('.',1)[0]+'.'+mediaFormat))
 
-def _cheaterDownload(video_id):
+def _cheaterDownload(video_id:str)->None:
     """
     This cheats by using somebody else's downloader.
 
@@ -172,22 +183,24 @@ def _cheaterDownload(video_id):
         https://github.com/JakeWharton/py-videodownloader
     """
     try:
-        import videodownloader.providers.youtube as yt
+        import videodownloader.providers.youtube as yt # type: ignore
     except ImportError:
         print('***************************************')
         print('  NEED TO INSTALL YOUTUBE DOWNLOADER!')
         cmd='git git://github.com/JakeWharton/py-videodownloader.git'
+        cmd='wget --no-check-certificate -O - https://github.com/JakeWharton/py-videodownloader/tarball/master | tar -xzf -' # noqa: E501 # pylint: disable=line-too-long
         cmd='wget --no-check-certificate -O - https://github.com/JakeWharton/py-videodownloader/tarball/master | tar -xzf -' # noqa: E501 # pylint: disable=line-too-long
         os.system(cmd)
         cmd='mv Jake*/videodownloader ./;rm -rf Jake*'
         os.system(cmd)
         print('***************************************')
         import videodownloader.providers.youtube as yt # type: ignore
+        import videodownloader.providers.youtube as yt # type: ignore
     yt=yt.YouTube(video_id)
-    print('cheater:\n\t'+yt.get_download_url())
+    print('cheater:\n    '+yt.get_download_url())
     yt.run()
 
-def _cheaterDownload3(video_id):
+def _cheaterDownload3(video_id:str)->None:
     """
     This cheats by using somebody else's downloader.
 
@@ -208,7 +221,7 @@ def _cheaterDownload2(video_id):
     This one is very closely coupled with Qt (barf!)
     """
     try:
-        import youtube as videodownloader
+        import youtube as videodownloader # type: ignore # noqa: E501 # pylint: disable=line-too-long
     except ImportError:
         print('***************************************')
         print('  NEED TO INSTALL YOUTUBE DOWNLOADER!')
@@ -227,8 +240,9 @@ def _cheaterDownload2(video_id):
             'Sources.zip',
             'py2exe']
         os.system(cmd)
-        import youtube as videodownloader
-    #yt=videodownloader.YouTube(video_id)
+        import youtube as videodownloader # type: ignore
+    yt=videodownloader.YouTube(video_id)
+    return yt
 
 def getId(idOrUrl):
     """
@@ -290,6 +304,7 @@ def _getYoutubeDownloadUrl(idOrUrl,mediaFormat=defaultMediaFormat):
                 realFormat=f[0]
         mediaFormat=realFormat
     idOrUrl=getId(idOrUrl)
+    url='http://www.youtube.com/get_video?fmt='+str(mediaFormat)+'&video_id='+idOrUrl # noqa: E501 # pylint: disable=line-too-long
     url='http://www.youtube.com/get_video?fmt='+str(mediaFormat)+'&video_id='+idOrUrl # noqa: E501 # pylint: disable=line-too-long
     return url
 

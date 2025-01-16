@@ -6,7 +6,8 @@ A webpageGetter that gets a website from the internet.
 import typing
 import datetime
 from paths import UrlCompatible
-from .webpageGetter import WebpageGetter
+from .urlGetter import WebpageGetter
+from .WebFetch import WebFetch
 
 
 class Internet(WebpageGetter):
@@ -19,9 +20,8 @@ class Internet(WebpageGetter):
     def __init__(self):
         WebpageGetter.__init__(self)
 
-    def _getWebFetchInstance(self)->"webfetch.WebFetch":
+    def _getWebFetchInstance(self)->"WebFetch.WebFetch":
         if self.__webFetchInstance is None:
-            from webFetch.WebFetch import WebFetch
             self.__webFetchInstance=WebFetch()
         return self.__webFetchInstance
 

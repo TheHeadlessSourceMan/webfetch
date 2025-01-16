@@ -19,7 +19,12 @@ from PyQt4.QtWebKit import QWebPage # type: ignore # noqa: E501 # pylint: disabl
 class _WfBrowser:
     """
     Represent a qt webkit browser
+    """
+    Represent a qt webkit browser
 
+    See also:
+        http://stackoverflow.com/questions/1197172/how-can-i-take-a-screenshot-image-of-a-website-using-python#12031316
+    """
     See also:
         http://stackoverflow.com/questions/1197172/how-can-i-take-a-screenshot-image-of-a-website-using-python#12031316
     """
@@ -35,7 +40,32 @@ class _WfBrowser:
 
     def __del__(self):
         self.app.quit()
+    def __del__(self):
+        self.app.quit()
 
+    def fetch(self,url,callback,returnType='html',block=True):
+        """
+        returnType is the type of data you want back it can be:
+            'html' to get the resultant html after scripting
+            'txt' to get that converted to plain text
+            'jpeg','png', or 'pdf' to get a screenshot of it
+                or any other PIL-saveable image format, really
+                http://pillow.readthedocs.io/en/3.1.x/handbook/image-file-formats.html
+        """
+        if self.app is None:
+            self.app=QApplication(sys.argv)
+            self.qWebpage=QWebPage(self.app)
+            self.qWebpage.loadFinished.connect(self._onLoaded)
+        if self._busy:
+            raise Exception("Browser is busy!")
+        self._busy=True
+        self.returnType=returnType
+        self.url=url
+        self.callback=callback
+        self.qWebpage.mainFrame().load(QUrl(url))
+        self.app.exec_()
+        if block:
+            self.wait()
     def fetch(self,url,callback,returnType='html',block=True):
         """
         returnType is the type of data you want back it can be:
@@ -66,6 +96,12 @@ class _WfBrowser:
         """
         while self._busy:
             time.sleep(0.1)
+    def wait(self):
+        """
+        wait for the browser to complete
+        """
+        while self._busy:
+            time.sleep(0.1)
 
     def _poolThread(self):
         while True:
@@ -75,6 +111,27 @@ class _WfBrowser:
             self.fetch(url,callback,fileType,block=True)
             self.pool._queue.task_done() # noqa: E501 # pylint: disable=line-too-long,protected-access
 
+    def _onLoaded(self):
+        #self.app.quit() # not sure I want to do this here
+        frame=self.qWebpage.mainFrame()
+        if self.returnType=='txt':
+            data=frame.toPlainText()
+        elif self.returnType in ['jpeg','png','pdf']:
+            self.qWebpage.setViewportSize(frame.contentsSize())
+            qImage=QImage(self.qWebpage.viewportSize(),QImage.Format_ARGB32)
+            painter=QPainter(qImage)
+            frame.render(painter)
+            painter.end()
+            pilImg=Image.fromqimage(qImage)
+            import io
+            f=io.StringIO()
+            pilImg.save(f,format=self.returnType)
+            data=f.getvalue()
+            f.close()
+        else:
+            data=frame.toHtml()
+        self.callback(self.url,data)
+        self._busy=False
     def _onLoaded(self):
         #self.app.quit() # not sure I want to do this here
         frame=self.qWebpage.mainFrame()
@@ -114,6 +171,21 @@ class BrowserPool:
             thread=threading.Thread(target=browser._poolThread)
             self._browserThreads.append(thread)
             thread.start()
+    """
+    The idea is this would own a number of headless browsers
+    and you could just submit a job and get notified when done
+    """
+    def __init__(self,numBrowsers=4):
+        import queue
+        self._browsers=[]
+        self._browserThreads=[]
+        self._queue=queue.Queue()
+        for _ in range(numBrowsers):
+            browser=_WfBrowser(self)
+            self._browsers.append(browser)
+            thread=threading.Thread(target=browser._poolThread)
+            self._browserThreads.append(thread)
+            thread.start()
 
     def addJob(self,url,callback,fileType='html'):
         """
@@ -121,7 +193,19 @@ class BrowserPool:
         different threads
         """
         self._queue.put((url,callback,fileType))
+    def addJob(self,url,callback,fileType='html'):
+        """
+        Note that all results could come back in
+        different threads
+        """
+        self._queue.put((url,callback,fileType))
 
+    def wait(self):
+        """
+        this waits for the queue to be empty and all threads to
+        call _queue.task_done()
+        """
+        self._queue.join()
     def wait(self):
         """
         this waits for the queue to be empty and all threads to

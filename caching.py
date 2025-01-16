@@ -95,8 +95,8 @@ class Cache:
         """
         if self._fetcher is None:
             if self.COMMON_DEFAULT_FETCHER is None:
-                import webFetch
-                self.COMMON_DEFAULT_FETCHER=webFetch.WebFetch()
+                import webfetch
+                self.COMMON_DEFAULT_FETCHER=webfetch.WebFetch()
             self._fetcher=self.COMMON_DEFAULT_FETCHER
         return self._fetcher
     @fetcher.setter
@@ -174,6 +174,7 @@ class Cache:
         turn a url into a hashable value
         """
         return hash(url)
+        return hash(url)
 
     def fetch(self,url:URLCompatible,
         date:typing.Optional[datetime.datetime]=None
@@ -240,7 +241,7 @@ class Cache:
         else:
             cWebsite=CachedWebsite()
             cWebsite.url=url
-            cWebsite.filename=self.cacheLocation
+            cWebsite.dataFilename=self.cacheLocation
             cWebsite.data=self._nextFilename()
             cWebsite.retrievalDate=retrievalDate
             self.cache[URL(url)]=cWebsite

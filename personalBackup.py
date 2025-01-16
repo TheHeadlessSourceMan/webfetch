@@ -7,10 +7,17 @@ with a yummy data-basey cream filling.
 import typing
 import datetime
 from paths import UrlCompatible,MimeType
-from formats.plainhtml import PlainHtmlBookmarks # type: ignore # noqa: E501 # pylint: disable=import-error,line-too-long
-from .webpageGetter import WebpageGetter
 from .website import Website
-htmlTool=PlainHtmlBookmarks()
+from .WebFetch import WebFetch
+from .urlGetter import WebpageGetter
+
+try:
+    from formats.plainhtml import PlainHtmlBookmarks # type: ignore # noqa: E501 # pylint: disable=import-error,line-too-long
+    hasPlainHtml=True
+except ImportError:
+    hasPlainHtml=False
+if hasPlainHtml:
+    htmlTool=PlainHtmlBookmarks()
 
 
 class PersonalBackup(WebpageGetter):
@@ -26,9 +33,8 @@ class PersonalBackup(WebpageGetter):
         self.database=database
         self.fetcher=None
 
-    def _getFetcher(self)->webfetch.WebFetch:
+    def _getFetcher(self)->WebFetch:
         if self.fetcher is None:
-            from webFetch.WebFetch import WebFetch
             self.fetcher=WebFetch()
         return self.fetcher
 
@@ -88,7 +94,7 @@ class PersonalBackup(WebpageGetter):
         """
         restore from personal backup
         """
-        stuff=()
+        stuff={}
         urlsToFetch=[website.bookmark.url]
         while len(urlsToFetch) > 0:
             url=urlsToFetch[0]
@@ -97,6 +103,7 @@ class PersonalBackup(WebpageGetter):
                 continue
             if url in website.ignoreUrls:
                 continue
+            addIfFetched=True
             saved=self._getResource(url,date,fetchIfMissing,addIfFetched)
             stuff[url]=saved[0]
             if saved[2]=='text/html':
@@ -193,6 +200,8 @@ class PersonalBackup(WebpageGetter):
         """
         Call into this class like it's a command line.
 
+        Don't forget that argv[0] is the calling app's name.
+        (You can set it to "" if you want to.)
         Don't forget that argv[0] is the calling app's name.
         (You can set it to "" if you want to.)
 
@@ -374,4 +383,6 @@ class PersonalBackup(WebpageGetter):
 
 
 if __name__ == '__main__':
+    PersonalBackup().cmdline()
+
     PersonalBackup().cmdline()

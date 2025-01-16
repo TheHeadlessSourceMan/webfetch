@@ -18,6 +18,7 @@ import datetime
 from paths import UrlCompatible
 from .website import Website
 from .personalBackup import PersonalBackup
+from .urlGetter import WebpageGetter
 
 
 class WebFetchPlus:
@@ -35,7 +36,7 @@ class WebFetchPlus:
             the list of backup services to use
         """
         self._personalBackups=[]
-        self._webpageGetters=[]
+        self._webpageGetters:typing.List[WebpageGetter]=[]
         # add all personalBackups
         if not isinstance(personalBackups,list):
             personalBackups=[]
