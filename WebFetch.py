@@ -9,6 +9,7 @@ using browser via selenium.
 """
 import typing
 import os
+from pathlib import Path
 import sys
 import re
 import subprocess
@@ -82,16 +83,11 @@ class WebFetch:
         if restartIfRunning:
             self._stop()
         if self.p is None:
-            directory='selenium-remote-control-'+self.seleniumVersion
-            jar=os.sep.join([
-                directory,
-                'selenium-server-'+self.seleniumVersion,
-                'selenium-server.jar'])
-            pythonDir=os.sep.join([
-                directory,
-                'selenium-python-client-driver-'+self.seleniumVersion])
+            directory=Path(f'selenium-remote-control-{self.seleniumVersion}')
+            jar=directory/ f'selenium-server-{self.seleniumVersion}selenium-server.jar' # noqa: E501 # pylint: disable=line-too-long
+            pythonDir=directory/f'selenium-python-client-driver-{self.seleniumVersion}' # noqa: E501 # pylint: disable=line-too-long
             sys.path.append(pythonDir)
-            self.p=subprocess.Popen('java -jar '+jar+' -port '+str(self.port))
+            self.p=subprocess.Popen(('java','-jar',jar,'-port ',str(self.port))) # noqa: E501 # pylint: disable=line-too-long
 
     def enqueue(self,fn:WebFetchCallback,
         urlOrHtml:typing.Union[UrlCompatible,str],
@@ -271,9 +267,8 @@ class WebFetch:
                         .replace('/','_SLASH_')\
                         .replace(':','_COLON_')\
                         .replace('.','_DOT_')
-                    f=open(output+os.sep+url,'wb')
-                    f.write(stuff.encode('utf-8'))
-                    f.close()
+                    f=Path(output)/url
+                    f.write_text(stuff,'utf-8')
 
         if printhelp:
             if len(argv)<2 or argv[0] is None or argv[0]=='':

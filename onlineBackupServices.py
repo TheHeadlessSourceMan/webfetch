@@ -3,7 +3,8 @@
 A webpageGetter tool for retreiving old webpages form
 online backup services (like "wayback machine")
 """
-import os
+import typing
+from pathlib import Path
 import datetime
 from .urlGetter import WebpageGetter
 
@@ -54,16 +55,17 @@ class OnlineBackupServices(WebpageGetter):
     def __init__(self):
         WebpageGetter.__init__(self)
         self._services={}
-        filename=(os.path.abspath(__file__).rsplit(os.sep,1)[0])\
-            +os.sep+'OnlineBackupServices.xml'
+        filename=Path(__file__).absolute().parent/'OnlineBackupServices.xml' # noqa: E501 # pylint: disable=line-too-long
         self.load(filename)
 
-    def load(self,filename:str):
+    def load(self,filename:typing.Union[str,Path]):
         """
         Load the data
         """
-        f=open(filename,'r',encoding='utf-8',errors='ignore')
-        for line in f:
+        if not isinstance(filename,Path):
+            filename=Path(filename)
+        data=filename.read_text(encoding='utf-8',errors='ignore')
+        for line in data.split('\n'):
             line=line.strip()
             if line.startswith('<OnlineBackupService '):
                 service=OnlineBackupService(line)
@@ -166,10 +168,8 @@ class OnlineBackupServices(WebpageGetter):
                             .replace('/','_SLASH_')\
                             .replace(':','_COLON_')\
                             .replace('.','_DOT_')
-                        f=open(output+os.sep+url,'wb')
-                        f.write(stuff)
-                        f.close()
-
+                        f=Path(output)/url
+                        f.write_text(stuff,'utf-8')
         if printhelp:
             if len(argv)<1 or argv[0] is None or argv[0]=='':
                 programName='python pybookmarks.py'

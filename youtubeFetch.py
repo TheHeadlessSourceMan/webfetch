@@ -6,6 +6,7 @@ This program fetches a youtube video.
 import typing
 from collections.abc import Iterable
 import os
+from pathlib import Path
 import urllib
 import urllib.parse
 from webFetch import WebFetch
@@ -63,36 +64,34 @@ def _createIdexPage(
     html.append('\t</div>')
     html.append('</body>')
     html.append('</html>')
-    f=open(outDir+os.sep+'index.html','w',encoding='utf-8')
-    f.write('\n'.join(html))
-    f.close()
+    path=Path(outDir)/'index.html'
+    path.write_text('\n'.join(html),encoding="utf-8")
 
 
 def __youtubeFetch(
-    counter,
-    wf,
-    idOrUrl,
-    filename,
-    mediaFormat=defaultMediaFormat,
-    outDir='.'):
-    """
-    Helper function to fetch youtubes
-    """
+    counter:typing.Union[int,float,str],
+    wf:str,
+    idOrUrl:str,
+    filename:str,
+    mediaFormat:str=defaultMediaFormat,
+    outDir:typing.Union[str,Path]='.'
+    )->None:
+    """ """
     filename=filename.split('.',1)[0]
-    def gotVideo(url,data):
+    if not isinstance(outDir,Path):
+        outDir=Path(outDir)
+    def gotVideo(url,data:bytes):
         _=url
-        if not os.path.isdir(outDir):
+        if not outDir.is_dir():
             os.makedirs(outDir)
-        f=open(outDir+os.sep+str(counter)+'-'+filename+'.'+mediaFormat,'wb')
-        f.write(data)
-        f.close()
+        outFilename=outDir/f"{counter}-{filename}.{mediaFormat}"
+        outFilename.write_bytes(data)
     def gotThumbnail(url,data):
         _=url
-        if not os.path.isdir(outDir):
+        if not outDir.is_dir():
             os.makedirs(outDir)
-        f=open(outDir+os.sep+str(counter)+'-'+filename+'.jpg','wb')
-        f.write(data)
-        f.close()
+        outFilename=outDir/f"{counter}-{filename}.jpg"
+        outFilename.write_bytes(data)
     def gotVideoPage(url,data):
         """
         Get a video page
@@ -168,11 +167,11 @@ def __youtubeFetch(
     # fill catalog with (name,thumbnail,video)
     wf.catalog.append((
         filename,
-        outDir+os.sep+str(counter)+'-'+filename+'.jpg',
+        outDir/f"{counter}-{filename}.jpg",
         str(counter)+'-'+filename.split('.',1)[0]+'.'+mediaFormat))
     wf.catalog.append((
         filename,
-        outDir+os.sep+str(counter)+'-'+filename+'.jpg',
+        outDir/f"{counter}-{filename}.jpg",
         str(counter)+'-'+filename.split('.',1)[0]+'.'+mediaFormat))
 
 def _cheaterDownload(video_id:str)->None:

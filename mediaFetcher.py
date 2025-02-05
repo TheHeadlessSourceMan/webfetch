@@ -5,8 +5,9 @@ This tool loads up a config xml and smartly fetches media
 accordingly
 """
 import typing
-import os
 import re
+import os
+from pathlib import Path
 import pickle
 from datetime import date
 from paths import UrlCompatible,Url
@@ -18,7 +19,7 @@ class Download:
     Represents a download
     """
 
-    def __init__(self,downloadTo:str=None):
+    def __init__(self,downloadTo:typing.Union[None,str,Path]=None):
         """
         Name is the name you want this search returned as.
 
@@ -41,11 +42,12 @@ class Download:
         self.urlLike:typing.List[typing.Pattern]=[]
         if downloadTo is None:
             downloadTo=date.today().strftime('%y%m%d_%a_%b_%d_%Y')
+        if not isinstance(downloadTo,Path):
+            downloadTo=Path(downloadTo)
         # if self.indexDir is None:
         #   self.indexDir=downloadTo
-        if not os.path.isdir(downloadTo):
-            os.mkdir(downloadTo)
-        self.downloadTo:typing.Optional[str]=downloadTo
+        os.makedirs(downloadTo)
+        self.downloadTo:typing.Optional[Path]=downloadTo
         self.speaker:typing.Optional[str]=None
         self.browserType:typing.Optional[str]=None
 
@@ -235,10 +237,7 @@ class MediaFetcher(WebFetch):
             else:
                 extension='data'
         # save the data
-        if downloadTo[-1]!=os.sep:
-            downloadTo=downloadTo+os.sep
-        filename=name.strip().replace(' ','_')
-        filename=downloadTo+filename+'.'+extension
+        filename=downloadTo/(name.strip().replace(' ','_')+'.'+extension)
         if not isinstance(data,bytes):
             data=data.encode('utf-8')
         f=open(filename,'w+b')
@@ -291,10 +290,10 @@ class MediaFetcher(WebFetch):
                     self.enqueue(self._resultsFound,url)
                     self.runNext()
         if not found:
-            # if the item is not retrieved, save out an html of what
-            # actually was retrieved, to help determine the failure
-            filename=download.downloadTo+os.sep+filename.replace(' ','_')+'_ERR.html' # noqa: E501 # pylint: disable=line-too-long
-            f=open(filename,'w+')
+            # if the item is not retrieved, save out an html of
+            # what actually was retrieved, to help determine the failure
+            filename=download.downloadTo/(filename.replace(' ','_')+'_ERR.html') # noqa: E501 # pylint: disable=line-too-long
+            f=open(filename,'w+',encoding="utf-8")
             f.write(html)
             f.close()
             if os.sep!='/':

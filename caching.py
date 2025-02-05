@@ -2,7 +2,7 @@
 Single cached website
 """
 import typing
-import os
+from pathlib import Path
 import datetime
 import uuid
 from paths import URL,URLCompatible,asUrl
@@ -104,11 +104,11 @@ class Cache:
         self._fetcher=fetcher
 
     @property
-    def filename(self)->str:
+    def filename(self)->Path:
         """
         get the filename of the manifest
         """
-        return str(self.cacheLocation)+os.sep+'manifest.csv'
+        return self.cacheLocation/'manifest.csv'
 
     def __del__(self):
         """
@@ -186,8 +186,7 @@ class Cache:
             return self.cacheLocation.fetch(url,date)
         if not isinstance(self.cacheLocation,str):
             raise Exception()
-        if not os.path.isdir(self.cacheLocation):
-            os.mkdir(self.cacheLocation)
+        self.cacheLocation.makedirs()
         data=self.getCache(url,date)
         if data is None:
             data=self.fetcher.fetch(url)
@@ -219,8 +218,7 @@ class Cache:
         """
         get the next filename for a cached file
         """
-        uid=str(uuid.uuid4().hex)
-        return f'{self.cacheLocation}{os.sep}{uid}.cache'
+        return self.cacheLocation/f"{uuid.uuid4().hex}.cache"
 
     def setCache(self,url:URLCompatible,data:bytes,
         retrievalDate:typing.Union[None,str,datetime.datetime]=None
